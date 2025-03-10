@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual sort</title>
+    <link rel="stylesheet" href="style_table.css">
+</head>
+<body>
+    <div class="table" id="table"></div>
+    <script>
+      // Variables globales pour les colonnes et les lignes
+        let selectedCols = [];
+        let rows = [];
+        let profileName = '';
+      // Écouter les messages de la fenêtre parent
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.action === 'updateTable') {
+                // Mettre à jour les valeurs depuis localStorage
+                const updatedCols = JSON.parse(localStorage.getItem('selectedColumns')) || [];
+                const updatedRows = JSON.parse(localStorage.getItem('rows')) || [];
+                const updatedProfileName = localStorage.getItem('profileName') || '';
+                // Réinitialiser les données globales
+                selectedCols.length = 0;
+                selectedCols.push(...updatedCols);
+                rows.length = 0;
+                rows.push(...updatedRows);
+                profileName = updatedProfileName;
+
+                // Mettre à jour le tableau
+                enter_virtual_chiffre();
+            }
+        });
+
+        // Initier le tableau lors du premier chargement
+        selectedCols = JSON.parse(localStorage.getItem('selectedColumns')) || [];
+        rows = JSON.parse(localStorage.getItem('rows')) || [];
+        profileName = JSON.parse(localStorage.getItem('profileName')) || '';
+        let headers = rows[0];
+        headers.push("Status");
+
+        function enter_virtual_chiffre() {
+            let table = `<h2>Enter data for ${profileName} </h2><table><thead><tr>`;
+
+            // Faire des colonnes en tête
+            selectedCols.forEach(colIndex => {
+                table += `<th>${rows[0][colIndex]}</th>`;
+            });
+            table += "</tr></thead><tbody>";
+
+            // Ajouter une ligne avec des champs d'entrée
+            table += "<tr>";
+            selectedCols.forEach(() => {
+                table += `<td><input type="text" placeholder="Enter value"></td>`;
+            });
+            table += "</tr></tbody></table>";
+
+            document.getElementById('table').innerHTML = table;
+        }
+
+        function add_lignes() {
+            // Récupérer le tableau existant
+            const tableBody = document.querySelector('#table table tbody');
+
+            // Vérifier si le tableau body existe
+            if (tableBody) {
+                // Ajouter une nouvelle ligne
+                const newRow = tableBody.insertRow();
+
+                // Ajouter des cellules avec champs d'entrée dans la nouvelle ligne
+                selectedCols.forEach(() => {
+                    const newCell = newRow.insertCell();
+                    newCell.innerHTML = `<input type="text" placeholder="Enter value">`;
+                });
+            }
+        }
+
+
+    function delete_lignes() {
+        // Récupérer le tableau existant
+        const tableBody = document.querySelector('#table table tbody');
+
+        // Vérifier s'il y a des lignes et supprimer la dernière
+        if (tableBody && tableBody.rows.length > 0) {
+            tableBody.deleteRow(tableBody.rows.length - 1);
+        }
+    }
+    function euclideanDistance(vec1, vec2) {
+        if (!vec1 || !vec2 || vec1.length !== vec2.length) {
+           throw new Error('Vectors are undefined or of different lengths');
+       }
+        let sum = 0;
+        for (let i = 0; i < vec1.length; i++) {
+            sum += Math.pow(vec1[i] - vec2[i], 2);
+        }
+        return Math.sqrt(sum);
+    }
+
+    function trierParDistanceEuclidienne(fullRows, virtual_Rows, filteredRows) {
+        let lines = [];
+
+        // Diviser les lignes choisi avec des autres lignes
+        for (let i = 0; i < filteredRows.length; i++) {
+            lines.push({ original: fullRows[i], filtered: filteredRows[i] });
+        }
+        console.log(lines);
+        let distanceMin = [];
+        // Calculer par le euclidean algorithme
+        for (let i = 0; i < lines.length; i++) {
+            let distances = [];
+            for (let j = 0; j < virtual_Rows.length; j++) {
+                let dist = euclideanDistance(lines[i].filtered, virtual_Rows[j]);
+                distances.push(dist);
+            }
+            let minDist = Math.min(...distances);
+            distanceMin.push({ row: lines[i].original, distance_min: minDist });
+        }
+
+        // Sort par le distance
+        distanceMin.sort((a, b) => a.distance_min - b.distance_min);
+        console.log(distanceMin);
+        let data = []
+        data = distanceMin.map(item => item.row);
+        // Return un nouveau table après similarité
+        return data;
+    }
+
+
+    function calculer_virtual_sort() {
+
+    // Récupérer toutes les lignes ajoutées dynamiquement par l'utilisateur
+    const tableBody = document.querySelector('#table table tbody');
+    const virtual_Rows = [];
+
+    if (tableBody) {
+        Array.from(tableBody.rows).forEach(row => {
+            const rowData = Array.from(row.cells).map(cell => {
+                const input = cell.querySelector("input");
+                return input ? parseFloat(input.value) || 0 : 0; // Récupérer la valeur entrée ou 0 par défaut
+            });
+            virtual_Rows.push(rowData);
+        });
+    }
+    console.log(virtual_Rows);
+    console.log(selectedCols);
+    // Vérifier si des lignes ont été sélectionnées / remplies
+    if (virtual_Rows.length === 0 || virtual_Rows.some(row => row.every(value => value === 0))) {
+        alert("Row not valid!");
+        return;
+    }
+
+        // Des valeurs pour les colonnes on a chosi
+        const filteredRows = rows.slice(1).map(row => {
+            return selectedCols.map(colIndex => parseFloat(row[colIndex]) || 0);
+        });
+
+        // Valeur original dans ce fichier
+        const fullRows = rows.slice(1);
+
+        // Données après similarité
+        let fullData = [];
+        const orderedData = trierParDistanceEuclidienne(fullRows, virtual_Rows, filteredRows);
+        console.log(orderedData);
+
+        const rowLength = orderedData[0].length;
+        // Préparer les virtual_Rows en étendant leurs colonnes
+        let formattedVirtualRows = virtual_Rows.map(row => {
+            let newRow = Array(rowLength).fill(null); // Créer une ligne avec des "vides"
+            selectedCols.forEach((colIdx, i) => {
+                newRow[colIdx] = row[i]; // Ajouter les valeurs sélectionnées aux positions correspondantes
+            });
+            newRow.push("Virtual")
+            return newRow;
+        });
+
+        // Ajouter "Real" à la fin de chaque ligne du orderedData
+        let formattedOrderedData = orderedData.map(row => {
+            let newRow = [...row]; // Faire une copie de la ligne
+            newRow.push("Real"); // Ajouter "Real" comme dernier élément de la ligne
+            return newRow;
+        });
+
+        // Insérer les virtual_Rows au début de orderedData
+        fullData = [...formattedVirtualRows, ...formattedOrderedData];
+        console.log(fullData);
+        // Creer un table pour des nouveau fichier .csv après similarité
+        let table = "<div class=\"table\" id=\"table\"><table><thead><tr>";
+        rows[0].forEach(header => {
+            table += `<th>${header}</th>`;
+        });
+        table += `<th>Status</th>`
+        table += "</tr></thead><tbody>";
+
+        fullData.forEach(row => {
+            table += "<tr>";
+            row.forEach(cell => {
+                table += `<td>${cell}</td>`;
+            });
+            table += "</tr>";
+        });
+        table += "</tbody></table></div>";
+        document.getElementById('table1').innerHTML = table;
+        return fullData;
+    }
+
+    function export_en_CSV() {
+        // Appeler 'calculer_virtual_sort()' pour obtenir les données
+        const data = calculer_virtual_sort();
+        if (!data || data.length === 0) {
+            console.error("Aucune donnée à exporter");
+            return;
+        }
+        // Convertir les données en CSV
+        let csvContent = headers.map(header => header).join(",") + "\n";
+        csvContent += data.map(row => row.join(",")).join("\n");
+
+        // Créer un fichier et le télécharger
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+
+        // Créer un lien pour le téléchargement
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `virtual_sort_${profileName}.csv`;
+        anchor.click();
+
+        // Nettoyer l'URL
+        window.URL.revokeObjectURL(url);
+    }
+
+
+    </script>
+    <br>
+    <button onclick="add_lignes()">Add line</button>
+    <button onclick="delete_lignes()">Delete line</button>
+    <button onclick="calculer_virtual_sort()">Calcul virtual sort</button>
+    <br><br>
+    <h2>Result after virtual sort</h2>
+    <div class="table1" id="table1"></div>
+    <br><br>
+    <button onclick="export_en_CSV()">Save file</button>
+</body>
+</html>

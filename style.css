@@ -1,0 +1,120 @@
+/* Styles pour le titre */
+h1 {
+    color: rgb(255, 80, 80);
+    margin: 0;
+    text-align: center;
+    padding: 20px;
+    background-color: #007bff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 24px;
+    border-radius: 10px;
+}
+
+/* Sous-titres */
+h2 {
+    color: rgb(0, 0, 0);
+    text-align: center;
+    background-color: #f8f9fa;
+    padding: 10px;
+    font-size: 18px;
+}
+
+/* Corps de la page */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+    text-align: center;
+}
+
+/* Conteneur principal */
+fieldset {
+    width: 90%;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Boutons */
+button {
+    height: 45px;
+    width: 10%;
+    color: white;
+    background-color: #007bff;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    text-align: center;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Labels */
+label {
+    display: inline-block;
+    margin: 5px;
+    padding: 8px 12px;
+    border-radius: 30px;
+    border: 1px solid #007bff;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+label:hover {
+    color: white;
+    background-color: #007bff;
+}
+
+/* Tableaux */
+table {
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+th {
+    background-color: #007bff;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+input[type="file"] {
+    opacity: 0;
+    position: absolute;
+    z-index: -1;
+}
+
+.profileButton {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #f0f0f0; /* Couleur par défaut */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.profileButton.activeProfile {
+    background-color: lightblue; /* Couleur du bouton actif */
+    color: white; /* Texte plus visible */
+    border-color: #007bff;
+}
