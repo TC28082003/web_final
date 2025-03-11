@@ -126,8 +126,8 @@
     }
 
 
+    let virtual_sortWindow = null;
     function calculer_virtual_sort() {
-
     // Récupérer toutes les lignes ajoutées dynamiquement par l'utilisateur
     const tableBody = document.querySelector('#table table tbody');
     const virtual_Rows = [];
@@ -184,7 +184,7 @@
         fullData = [...formattedVirtualRows, ...formattedOrderedData];
         console.log(fullData);
         // Creer un table pour des nouveau fichier .csv après similarité
-        let table = "<div class=\"table\" id=\"table\"><table><thead><tr>";
+        let table = `<div class=\"table\" id=\"table\"> <h1>Result virtual sort for ${profileName}</h1><table><thead><tr>`;
         rows[0].forEach(header => {
             table += `<th>${header}</th>`;
         });
@@ -199,45 +199,25 @@
             table += "</tr>";
         });
         table += "</tbody></table></div>";
-        document.getElementById('table1').innerHTML = table;
-        return fullData;
-    }
-
-    function export_en_CSV() {
-        // Appeler 'calculer_virtual_sort()' pour obtenir les données
-        const data = calculer_virtual_sort();
-        if (!data || data.length === 0) {
-            console.error("Aucune donnée à exporter");
-            return;
+        localStorage.setItem('table', JSON.stringify(table));
+        localStorage.setItem('profileName', JSON.stringify(profileName));
+        localStorage.setItem('fullData', JSON.stringify(fullData));
+        localStorage.setItem('headers', JSON.stringify(headers));
+        // Vérifier si la fenêtre `display.html` est déjà ouverte
+        if (virtual_sortWindow && !virtual_sortWindow.closed) {
+            // Si déjà ouverte, envoyer une commande à la fenêtre pour qu'elle mette à jour son contenu
+            virtual_sortWindow.postMessage({ action: 'updateTable' }, '*');
+            virtual_sortWindow.focus(); // Ramener au premier plan
+        } else {
+            // Sinon, ouvrir une nouvelle fenêtre et conserver la référence
+            virtual_sortWindow = window.open('result_virtual.html', '_blank');
         }
-        // Convertir les données en CSV
-        let csvContent = headers.map(header => header).join(",") + "\n";
-        csvContent += data.map(row => row.join(",")).join("\n");
-
-        // Créer un fichier et le télécharger
-        const blob = new Blob([csvContent], { type: "text/csv" });
-        const url = window.URL.createObjectURL(blob);
-
-        // Créer un lien pour le téléchargement
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = `virtual_sort_${profileName}.csv`;
-        anchor.click();
-
-        // Nettoyer l'URL
-        window.URL.revokeObjectURL(url);
     }
-
 
     </script>
     <br>
     <button onclick="add_lignes()">Add line</button>
     <button onclick="delete_lignes()">Delete line</button>
     <button onclick="calculer_virtual_sort()">Calcul virtual sort</button>
-    <br><br>
-    <h2>Result after virtual sort</h2>
-    <div class="table1" id="table1"></div>
-    <br><br>
-    <button onclick="export_en_CSV()">Save file</button>
 </body>
 </html>

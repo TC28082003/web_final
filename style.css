@@ -26,6 +26,7 @@ body {
     padding: 20px;
     background-color: #f4f4f4;
     text-align: center;
+    font-size: 16px;
 }
 
 /* Conteneur principal */
@@ -103,18 +104,4 @@ input[type="file"] {
     z-index: -1;
 }
 
-.profileButton {
-    margin: 5px;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #f0f0f0; /* Couleur par défaut */
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    cursor: pointer;
-}
 
-.profileButton.activeProfile {
-    background-color: lightblue; /* Couleur du bouton actif */
-    color: white; /* Texte plus visible */
-    border-color: #007bff;
-}

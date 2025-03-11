@@ -115,20 +115,6 @@ function display_list_profiles(contenu, fichier) {
     htmlContent += `
         <fieldset><legend>List profiles</legend>
             <div id ="profileListContainer" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px;">
-                <div style="text-align: center;">
-                    <button onclick="display_profile('${fichier.name}')" style=" 
-                    width: 100%;
-                    color: white;
-                    background-color: #007bff;
-                    border: none;
-                    border-radius: 30px;
-                    font-size: 16px;
-                    cursor: pointer;
-                    transition: all 0.3s ease-in-out;
-                    text-align: center;">
-                    ${fichier.name}
-                    </button>
-                </div>
             </div>
         </fieldset>
     `;
@@ -154,13 +140,21 @@ function display_list_profiles(contenu, fichier) {
             <button onclick="delete_profil()">
                 Delete profile
             </button>
-            <button onclick="simlilar_profile()">Similar</button>
-            <button onclick="virtual_profile()">Virtual sort</button>
+            <button onclick="save_profile_data()">
+                Save profile
+            </button>
+            <button onclick="simlilar_profile()">
+                Similar
+            </button>
+            <button onclick="virtual_profile()">
+                Virtual sort
+            </button>
         </div>
     `;
 
     // Afficher le contenu HTML généré dans l'élément table
     document.getElementById("table").innerHTML = htmlContent;
+    updateProfileList();
 }
 
 // Fonction pour mettre à jour dynamiquement l'affichage du "Nom du profil"
@@ -171,6 +165,8 @@ function updateProfileDisplay(input) {
 // Fonction pour sauvegarder un profil
 function Save_profile() {
     const profileName = document.getElementById("profileName").value.trim();
+    const profileNameData = lastVisitedProfile || localStorage.getItem("lastVisitedProfile");
+    console.log("profile name: ",profileName);
     let selectedCols = Array.from(document.querySelectorAll('input.colSelect:checked')).map(input => parseInt(input.value));
     if (!profileName) {
         alert("Please enter a valid profile name.");
@@ -185,6 +181,34 @@ function Save_profile() {
         alert("Profile exists. Please choose another profile name!");
         return;
     }
+
+    if (!profileNameData || profileNameData === "(Aucun)") {
+        alert("No profile selected. Please select a profile from the list!");
+        return;
+    }
+
+    // Récupérer les données du profil
+    const profileData = savedProfiles[profileNameData];
+    let rows = [];
+
+    if (!profileData) {
+        alert(`Profile "${profileName}" does not exist!`);
+        return;
+    }
+    console.log(profileData);
+    // Ajouter les noms des colonnes comme première ligne
+    const columnNames = Object.keys(profileData); // Obtenir les clés des colonnes
+    rows.push(columnNames); // Première ligne avec les noms des colonnes
+
+    // Trouver le nombre maximum de lignes nécessaire
+    const maxRows = Math.max(...Object.values(profileData).map(col => col.length));
+
+    // Ajouter les données ligne par ligne
+    for (let rowIndex = 0; rowIndex < maxRows; rowIndex++) {
+        let row = columnNames.map(colName => profileData[colName][rowIndex] || ""); // Extraire les données par colonne
+        rows.push(row);
+    }
+
     // Créer un objet pour stocker les colonnes sélectionnées et leurs valeurs
     let selectedData = {};
 
@@ -255,22 +279,6 @@ function updateProfileList() {
 
 }
 
-// Ajout d'un gestionnaire sur chaque bouton
-function addClickHandlersToProfiles() {
-    const profileButtons = document.querySelectorAll(".profileButton");
-    profileButtons.forEach(button => {
-        button.addEventListener("click", () => {
-            alert("You clicked on a profile!");
-            // Réinitialiser la classe active pour tous les boutons
-            profileButtons.forEach(btn => btn.classList.remove("activeProfile"));
-
-            // Ajouter la classe active seulement au bouton cliqué
-            button.classList.add("activeProfile");
-        });
-    });
-}
-
-
 let lastVisitedProfile = ""; //
 
 // Fonction pour afficher toutes les colonnes du profil `name_profile`
@@ -279,7 +287,7 @@ function display_profile(profileName) {
     const columnHeaders = Object.keys(profileData); // Les colonnes (les clés)
 
     // Obtenir l'en-tête de colonnes (première ligne du fichier)
-    let htmlColonnes = "<div style='display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;'>";
+    let htmlColonnes = "<div style='display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 2px; column-gap: 2px'>";
 
     for (let j = 0; j < columnHeaders.length; j++) {
         // Générer chaque colonne
@@ -367,6 +375,50 @@ function delete_profil() {
     alert(`Profile "${profileName}" has been deleted successfully!`);
 }
 
+function save_profile_data() {
+            const profileName = lastVisitedProfile || localStorage.getItem("lastVisitedProfile");
+            if (!profileName || profileName === "(Aucun)") {
+                alert("No profile selected. Please select a profile from the list!");
+                return;
+            }
+
+            // Récupérer les données du profil
+            const profileData = savedProfiles[profileName];
+            const columnHeaders = Object.keys(profileData); // Les colonnes (les clés)
+            const numRows = profileData[columnHeaders[0]].length; // Nombre de lignes basé sur le premier tableau
+
+            if (!profileData || numRows === 0) {
+                alert("Données indisponibles pour ce profil !");
+                return;
+            }
+
+            // Construire le contenu CSV
+            let csvContent = "";
+            // Ajouter les en-têtes
+            csvContent += columnHeaders.map(header => header).join(",") + "\n";
+            // Ajouter les données
+            for (let i = 0; i < numRows; i++) {
+                csvContent += columnHeaders.map(header => profileData[header][i]).join(",") + "\n";
+            }
+
+            // Créer un fichier Blob pour le téléchargement
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const filename = `${profileName}.csv`; // Utilise le nom du profil
+
+            // Créer un lien pour télécharger le fichier
+            const link = document.createElement("a");
+            if (link.download !== undefined) { // Vérification de téléchargement pris en charge
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert("Your browser does not support CSV export.");
+            }
+
+}
 let similarityWindow = null;
 let virtualWindow = null;
 
